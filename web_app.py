@@ -2,152 +2,123 @@ import streamlit as st
 import random
 import time
 
-# --- KONFIGURATSIYA ---
-st.set_page_config(page_title="Brawl Stars 8.0", page_icon="⭐", layout="wide")
+# --- SETUP ---
+st.set_page_config(page_title="Brawl Stars 9.0", page_icon="⚡", layout="wide")
 
-# --- ULTRA MODERN CSS ---
+# --- ULTRA NEON DESIGN ---
 st.markdown("""
     <style>
-    /* Fon va umumiy uslub */
     .stApp {
-        background: radial-gradient(circle, #1a1a2e 0%, #16213e 100%);
-        color: white;
+        background: radial-gradient(circle, #000428, #004e92, #000);
+        color: #fff;
     }
-    
-    /* Resurslar paneli */
-    .stat-bar {
-        background: rgba(0, 0, 0, 0.6);
-        border: 2px solid #f1c40f;
-        border-radius: 50px;
-        padding: 10px 25px;
-        display: inline-block;
-        margin: 10px;
-        font-weight: bold;
-        font-size: 22px;
-        box-shadow: 0 0 15px rgba(241, 196, 15, 0.3);
-    }
-
-    /* Box interfeysi */
-    .box-card {
-        background: rgba(255, 255, 255, 0.05);
-        border-radius: 30px;
-        padding: 30px;
-        text-align: center;
-        border: 2px solid transparent;
-        transition: 0.4s;
-    }
-    .box-card:hover {
-        border-color: #00d2ff;
-        transform: translateY(-10px);
+    .stat-box {
         background: rgba(255, 255, 255, 0.1);
-    }
-    
-    /* Brawler kartochkalari */
-    .brawler-unit {
-        background: rgba(0, 0, 0, 0.4);
+        border: 2px solid #00d2ff;
         border-radius: 15px;
         padding: 10px;
-        margin: 5px;
-        border-left: 5px solid #f1c40f;
-        text-align: left;
+        text-align: center;
+        font-weight: bold;
+    }
+    .box-clicker {
+        background: linear-gradient(135deg, #f1c40f 0%, #d35400 100%);
+        border-radius: 30px;
+        padding: 50px;
+        text-align: center;
+        cursor: pointer;
+        border: 4px solid #fff;
+        box-shadow: 0 0 30px rgba(241, 196, 15, 0.5);
+        transition: 0.3s;
+    }
+    .box-clicker:active {
+        transform: scale(0.9);
+    }
+    .mega-clicker {
+        background: linear-gradient(135deg, #3498db 0%, #2c3e50 100%);
+        box-shadow: 0 0 30px rgba(52, 152, 219, 0.5);
+    }
+    .brawler-card {
+        background: rgba(255,255,255,0.05);
+        border-left: 8px solid;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 10px;
     }
     </style>
     """, unsafe_allow_html=True)
 
-# --- LOGIKA ---
-if 'coins' not in st.session_state: st.session_state.coins = 3000
-if 'gems' not in st.session_state: st.session_state.gems = 150
+# --- STATE ---
+if 'coins' not in st.session_state: st.session_state.coins = 1000
+if 'gems' not in st.session_state: st.session_state.gems = 100
 if 'inv' not in st.session_state: st.session_state.inv = []
-if 'last_reward' not in st.session_state: st.session_state.last_reward = ""
+if 'history' not in st.session_state: st.session_state.history = []
 
-# Yangi brawlerlar bazasi
-BRAWLERS_DATA = {
-    "Leon": "Legendary", "Crow": "Legendary", "Spike": "Legendary",
-    "Mortis": "Mythic", "Tara": "Mythic", "Gene": "Mythic",
-    "Edgar": "Epic", "Frank": "Epic", "Bibi": "Epic"
+BRAWLERS = {
+    "LEON": {"color": "#f1c40f", "rarity": "LEGENDARY"},
+    "CROW": {"color": "#f1c40f", "rarity": "LEGENDARY"},
+    "SPIKE": {"color": "#f1c40f", "rarity": "LEGENDARY"},
+    "MORTIS": {"color": "#e74c3c", "rarity": "MYTHIC"},
+    "TARA": {"color": "#e74c3c", "rarity": "MYTHIC"},
+    "EDGAR": {"color": "#9b59b6", "rarity": "EPIC"}
 }
 
-def open_logic(box_name):
-    st.session_state.last_reward = "Ochilyapti..."
-    # Haqiqiy ochilish effekti uchun animatsiya kutish
-    time.sleep(0.8)
+# --- FUNCTIONS ---
+def open_box(box_type):
+    with st.spinner("📦 Qutilar silkinmoqda..."):
+        time.sleep(1.2)
     
-    chance = 0.4 if box_name == "Mega" else 0.2
+    chance = 0.5 if box_type == "MEGA" else 0.25
     if random.random() < chance:
-        new_b = random.choice(list(BRAWLERS_DATA.keys()))
-        if new_b not in st.session_state.inv:
-            st.session_state.inv.append(new_b)
-            st.session_state.last_reward = f"🔥 YANGI JANGCHI: {new_b.upper()}!"
+        name = random.choice(list(BRAWLERS.keys()))
+        if name not in st.session_state.inv:
+            st.session_state.inv.append(name)
+            st.session_state.history.insert(0, f"🌟 YANGI: {name}!")
             st.balloons()
         else:
-            bonus = random.randint(500, 1000)
-            st.session_state.coins += bonus
-            st.session_state.last_reward = f"Takroriy {new_b}! +{bonus} tanga."
+            st.session_state.coins += 500
+            st.session_state.history.insert(0, f"💰 Dublikat {name}: +500!")
     else:
-        reward = random.randint(150, 450)
-        st.session_state.coins += reward
-        st.session_state.last_reward = f"💰 Faqat tangalar: +{reward}"
+        gain = random.randint(100, 400)
+        st.session_state.coins += gain
+        st.session_state.history.insert(0, f"💵 Olingan: +{gain} tanga")
 
-# --- ASOSIY UI ---
-st.markdown(f"""
-    <div style='text-align: center;'>
-        <div class='stat-bar'>💰 {st.session_state.coins:,}</div>
-        <div class='stat-bar'>💎 {st.session_state.gems}</div>
-    </div>
-    """, unsafe_allow_html=True)
+# --- UI ---
+st.title("⚡ BRAWL STARS: HYPERCHARGE v9.0")
 
-col_shop, col_inv = st.columns([2, 1])
+c1, c2, c3 = st.columns(3)
+with c1: st.markdown(f"<div class='stat-box'>💰 TANGALAR: {st.session_state.coins}</div>", unsafe_allow_html=True)
+with c2: st.markdown(f"<div class='stat-box'>💎 GEMLAR: {st.session_state.gems}</div>", unsafe_allow_html=True)
+with c3: st.markdown(f"<div class='stat-box'>👤 JANGCHILAR: {len(st.session_state.inv)}</div>", unsafe_allow_html=True)
 
-with col_shop:
-    st.header("🛒 BOX MARKET")
+st.write("---")
+
+col_play, col_inv = st.columns([1.5, 1])
+
+with col_play:
+    st.subheader("📦 QUTI OCHISH (Ustiga bos!)")
     
-    s1, s2 = st.columns(2)
+    b1, b2 = st.columns(2)
     
-    with s1:
-        st.markdown("<div class='box-card'>", unsafe_allow_html=True)
-        # Big Box uchun barqaror havola
-        st.image("https://img.icons8.com/color/160/gift-box.png", caption="BIG BOX")
-        if st.button("OCHISH (400 💰)", use_container_width=True, key="big"):
+    with b1:
+        st.markdown("<div class='box-clicker'>", unsafe_allow_html=True)
+        st.markdown("<h1 style='font-size: 80px;'>🎁</h1>", unsafe_allow_html=True)
+        st.write("### BIG BOX")
+        if st.button("400 Tanga Sarflash", use_container_width=True):
             if st.session_state.coins >= 400:
                 st.session_state.coins -= 400
-                open_logic("Big")
+                open_box("BIG")
                 st.rerun()
+            else: st.error("Tanga yetarli emas!")
         st.markdown("</div>", unsafe_allow_html=True)
 
-    with s2:
-        st.markdown("<div class='box-card'>", unsafe_allow_html=True)
-        # Mega Box uchun barqaror havola
-        st.image("https://img.icons8.com/color/160/treasure-chest.png", caption="MEGA BOX")
-        if st.button("OCHISH (60 💎)", use_container_width=True, key="mega"):
+    with b2:
+        st.markdown("<div class='box-clicker mega-clicker'>", unsafe_allow_html=True)
+        st.markdown("<h1 style='font-size: 80px;'>🔵</h1>", unsafe_allow_html=True)
+        st.write("### MEGA BOX")
+        if st.button("60 Gem Sarflash", use_container_width=True):
             if st.session_state.gems >= 60:
                 st.session_state.gems -= 60
-                open_logic("Mega")
+                open_box("MEGA")
                 st.rerun()
-        st.markdown("</div>", unsafe_allow_html=True)
-
-    if st.session_state.last_reward:
-        st.info(st.session_state.last_reward)
-    
-    st.write("---")
-    if st.button("⚔️ JANG QILIB PUL TOPISH", use_container_width=True):
-        st.session_state.coins += random.randint(50, 150)
-        st.rerun()
-
-with col_inv:
-    st.header("👤 JANGCHILARIM")
-    if not st.session_state.inv:
-        st.write("Hozircha bo'sh...")
-    else:
-        for b in st.session_state.inv:
-            rarity = BRAWLERS_DATA.get(b, "Common")
-            st.markdown(f"""
-                <div class='brawler-unit'>
-                    <b>{b}</b><br>
-                    <small style='color: #f1c40f;'>{rarity}</small>
-                </div>
-            """, unsafe_allow_html=True)
-
-# Reset
-if st.sidebar.button("Tozalash (Reset)"):
-    st.session_state.clear()
-    st.rerun()
+            else: st.error("Gemlar yetarli emas!")
+        st.markdown("</div>", unsafe_allow_
