@@ -3,132 +3,147 @@ import random
 import time
 
 # --- KONFIGURATSIYA ---
-st.set_page_config(page_title="Brawl Stars Ultimate", page_icon="⭐", layout="wide")
+st.set_page_config(page_title="Brawl Stars: Legends", page_icon="⚔️", layout="wide")
 
-# --- STYLING (Neon va Brawl Stars foni) ---
+# --- STYLING (Brawl Stars UI) ---
 st.markdown("""
     <style>
     .stApp {
-        background: url("https://images.unsplash.com/photo-1614036417651-efe591214972?q=80&w=2000");
-        background-size: cover;
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
         color: white;
     }
-    .main-lobby {
-        background: rgba(0, 0, 0, 0.75);
-        border: 5px solid #f1c40f;
-        border-radius: 30px;
-        padding: 30px;
+    .main-header {
+        background: rgba(0, 0, 0, 0.5);
+        border-radius: 20px;
+        padding: 20px;
+        border: 3px solid #f1c40f;
         text-align: center;
-        backdrop-filter: blur(10px);
-    }
-    .resource-bar {
-        background: rgba(255, 255, 255, 0.1);
-        padding: 10px;
-        border-radius: 50px;
-        text-align: center;
-        font-weight: bold;
-        font-size: 20px;
-        border: 2px solid #f1c40f;
+        margin-bottom: 20px;
     }
     .brawler-card {
-        background: linear-gradient(180deg, #3498db, #2980b9);
+        background: rgba(255, 255, 255, 0.1);
         border-radius: 20px;
         padding: 15px;
-        margin: 10px;
         text-align: center;
-        border: 3px solid #fff;
+        border: 2px solid #555;
         transition: 0.3s;
     }
-    .brawler-card:hover { transform: scale(1.05); }
-    .box-img { width: 150px; cursor: pointer; transition: 0.5s; }
-    .box-img:hover { transform: rotate(10deg) scale(1.1); }
+    .brawler-card:hover {
+        border-color: #f1c40f;
+        transform: scale(1.02);
+    }
+    .box-container {
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 25px;
+        padding: 20px;
+        text-align: center;
+        border: 1px solid #00d2ff;
+    }
+    .resource-val {
+        font-size: 24px;
+        font-weight: bold;
+        color: #f1c40f;
+    }
     </style>
     """, unsafe_allow_html=True)
 
-# --- O'YIN HOLATI (DATABASE) ---
-if 'coins' not in st.session_state: st.session_state.coins = 500
-if 'gems' not in st.session_state: st.session_state.gems = 50
+# --- INITIALIZATION ---
+if 'coins' not in st.session_state: st.session_state.coins = 200
+if 'gems' not in st.session_state: st.session_state.gems = 20
 if 'inventory' not in st.session_state: 
-    st.session_state.inventory = [{"name": "Shelly", "rarity": "Начальный", "img": "https://cdn.fbsbx.com/v/t59.2708-21/116934898_320341775775434_4223280145828821035_n.gif?_nc_cat=102&ccb=1-7&_nc_sid=5f2048&_nc_ohc=f6tS2n6H7ZcAb7W_R5u&_nc_ht=cdn.fbsbx.com&oh=03_QeaH9XG8z7f7g&oe=66000000"}]
-if 'msg' not in st.session_state: st.session_state.msg = ""
+    st.session_state.inventory = [{"name": "Shelly", "rarity": "Common", "power": 1}]
+if 'logs' not in st.session_state: st.session_state.logs = []
 
-# BRAWLERLAR MA'LUMOTI
-BRAWLERS_DB = {
-    "El Primo": {"rarity": "Редкий", "img": "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExOHp1eHRqZnd4eHJ6eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1z/hS6U6l2Yv7MDRp8h8j/giphy.gif"},
-    "Colt": {"rarity": "Редкий", "img": "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExOHp1eHRqZnd4eHJ6eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1z/f3v0YI1U6vD9r7v6Z6/giphy.gif"},
-    "Leon": {"rarity": "Легендарный", "img": "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExOHp1eHRqZnd4eHJ6eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1z/3o7TKMGVpE9L9v9K92/giphy.gif"},
-    "Crow": {"rarity": "Легендарный", "img": "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExOHp1eHRqZnd4eHJ6eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1z/3o7TKMGVpE9L9v9K92/giphy.gif"},
-    "Mortis": {"rarity": "Мифический", "img": "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExOHp1eHRqZnd4eHJ6eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1z/3o7TKMGVpE9L9v9K92/giphy.gif"}
-}
+# --- BRAWLERS DATA ---
+BRAWLERS = [
+    {"name": "Colt", "rarity": "Rare", "img": "https://www.google.com/logos/fnbx/brawlstars/colt.png"},
+    {"name": "El Primo", "rarity": "Rare", "img": "https://www.google.com/logos/fnbx/brawlstars/el_primo.png"},
+    {"name": "Mortis", "rarity": "Mythic", "img": "https://www.google.com/logos/fnbx/brawlstars/mortis.png"},
+    {"name": "Leon", "rarity": "Legendary", "img": "https://www.google.com/logos/fnbx/brawlstars/leon.png"},
+    {"name": "Crow", "rarity": "Legendary", "img": "https://www.google.com/logos/fnbx/brawlstars/crow.png"},
+    {"name": "Spike", "rarity": "Legendary", "img": "https://www.google.com/logos/fnbx/brawlstars/spike.png"}
+]
 
-# --- FUNKSIYALAR ---
-def open_case(type):
-    if type == "Mega":
-        items = list(BRAWLERS_DB.keys())
-        won = random.choice(items)
-        if not any(b['name'] == won for b in st.session_state.inventory):
-            st.session_state.inventory.append({"name": won, "rarity": BRAWLERS_DB[won]['rarity'], "img": BRAWLERS_DB[won]['img']})
-            st.session_state.msg = f"🌟 ВАУ! ВЫ ВЫБИЛИ {won.upper()}!"
+# --- FUNCTIONS ---
+def open_box(box_type):
+    if box_type == "Mega":
+        win_chance = 0.5 # 50% chance for new brawler
+        reward_coins = random.randint(100, 300)
+    else:
+        win_chance = 0.2 # 20% chance
+        reward_coins = random.randint(30, 80)
+    
+    st.session_state.coins += reward_coins
+    
+    if random.random() < win_chance:
+        new_brawler = random.choice(BRAWLERS)
+        if not any(b['name'] == new_brawler['name'] for b in st.session_state.inventory):
+            st.session_state.inventory.append({"name": new_brawler['name'], "rarity": new_brawler['rarity'], "power": 1})
+            st.session_state.logs.insert(0, f"⭐ НОВЫЙ БОЕЦ: {new_brawler['name']}!")
             st.balloons()
         else:
-            st.session_state.coins += 500
-            st.session_state.msg = f"Повторка {won}! Получено +500 монет."
+            st.session_state.logs.insert(0, f"💰 Выпало {reward_coins} монет и очки силы.")
+    else:
+        st.session_state.logs.insert(0, f"💰 Получено {reward_coins} монет.")
 
-# --- INTERFEYS ---
-# Resurslar
-c1, c2, c3 = st.columns(3)
-with c1: st.markdown(f"<div class='resource-bar'>💰 {st.session_state.coins}</div>", unsafe_allow_html=True)
-with c2: st.markdown(f"<div class='resource-bar'>💎 {st.session_state.gems}</div>", unsafe_allow_html=True)
-with c3: st.markdown(f"<div class='resource-bar'>👤 {len(st.session_state.inventory)}/60</div>", unsafe_allow_html=True)
+# --- UI LAYOUT ---
+st.markdown("<div class='main-header'><h1>⭐ BRAWL STARS LOBBY</h1></div>", unsafe_allow_html=True)
+
+# Resources bar
+r1, r2, r3, r4 = st.columns(4)
+r1.metric("💰 Монеты", f"{st.session_state.coins}")
+r2.metric("💎 Гемы", f"{st.session_state.gems}")
+r3.metric("👤 Бойцы", f"{len(st.session_state.inventory)}")
+r4.button("⚡ ИГРАТЬ", on_click=lambda: st.session_state.update({"coins": st.session_state.coins + 25}))
 
 st.write("---")
 
-col_left, col_right = st.columns([2, 1])
+col_shop, col_inv = st.columns([1.5, 1])
 
-with col_left:
-    st.markdown("<div class='main-lobby'>", unsafe_allow_html=True)
-    st.header("🛒 МАГАЗИН ЯЩИКОВ")
+with col_shop:
+    st.subheader("🛒 МАГАЗИН ЯЩИКОВ")
+    s1, s2 = st.columns(2)
     
-    b1, b2 = st.columns(2)
-    with b1:
-        st.image("https://raw.githubusercontent.com/A-Shox/Brawl_Images/main/big_box.png", width=150)
-        if st.button("КРАСНЫЙ ЯЩИК (100 💰)"):
+    with s1:
+        st.markdown("<div class='box-container'>", unsafe_allow_html=True)
+        st.image("https://static.wikia.nocookie.net/brawlstars/images/5/5a/Big_Box.png/revision/latest?cb=20200514170450", width=100)
+        st.write("### BIG BOX")
+        if st.button("ОТКРЫТЬ (100 💰)", key="big"):
             if st.session_state.coins >= 100:
                 st.session_state.coins -= 100
-                open_case("Big")
+                open_box("Big")
                 st.rerun()
-    with b2:
-        st.image("https://raw.githubusercontent.com/A-Shox/Brawl_Images/main/mega_box.png", width=150)
-        if st.button("МЕГА ЯЩИК (80 💎)"):
-            if st.session_state.gems >= 80:
-                st.session_state.gems -= 80
-                open_case("Mega")
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    with s2:
+        st.markdown("<div class='box-container'>", unsafe_allow_html=True)
+        st.image("https://static.wikia.nocookie.net/brawlstars/images/1/14/Mega_Box.png/revision/latest?cb=20200514170535", width=100)
+        st.write("### MEGA BOX")
+        if st.button("ОТКРЫТЬ (60 💎)", key="mega"):
+            if st.session_state.gems >= 60:
+                st.session_state.gems -= 60
+                open_box("Mega")
                 st.rerun()
-    
-    if st.session_state.msg:
-        st.warning(st.session_state.msg)
+        st.markdown("</div>", unsafe_allow_html=True)
     
     st.write("---")
-    if st.button("ИГРАТЬ (ЗАРАБОТАТЬ МОНЕТЫ) ⚔️", use_container_width=True):
-        win = random.randint(20, 100)
-        st.session_state.coins += win
-        if random.random() < 0.1: st.session_state.gems += 5
-        st.rerun()
-    st.markdown("</div>", unsafe_allow_html=True)
+    st.subheader("📜 Последние события")
+    for log in st.session_state.logs[:5]:
+        st.write(log)
 
-with col_right:
-    st.header("🗄️ МОИ БОЙЦЫ")
+with col_inv:
+    st.subheader("👤 МОИ БОЙЦЫ")
     for b in st.session_state.inventory:
-        with st.container():
-            st.markdown(f"""
-                <div class='brawler-card'>
-                    <img src='{b['img']}' width='80'>
-                    <h4>{b['name']}</h4>
-                    <small>{b['rarity']}</small>
-                </div>
-            """, unsafe_allow_html=True)
+        st.markdown(f"""
+            <div class='brawler-card'>
+                <h3>{b['name']}</h3>
+                <p style='color: #f1c40f;'>{b['rarity']}</p>
+                <progress value='{b['power']*10}' max='100' style='width: 100%;'></progress>
+            </div>
+        """, unsafe_allow_html=True)
 
-# Reset
-if st.sidebar.button("Удалить Аккаунт"):
+# Sidebar
+st.sidebar.title("Настройки")
+if st.sidebar.button("Сбросить аккаунт 🔄"):
     st.session_state.clear()
     st.rerun()
