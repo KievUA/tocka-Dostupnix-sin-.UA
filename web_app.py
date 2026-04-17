@@ -78,4 +78,124 @@ def open_box(cost, brawler_chance):
                     st.success(f"🔥 НОВЫЙ БОЕЦ: {name}!")
                 else:
                     st.session_state.gold += (cost * 2)
-                    st.info(f"💰 Дубли
+                    st.info(f"💰 Дубликат! Получено {cost*2} золота.")
+            else:
+                gain = random.randint(int(cost*0.3), int(cost*0.9))
+                st.session_state.gold += gain
+                st.toast(f"📦 Золото: +{gain}")
+    else:
+        st.error("Недостаточно золота!")
+
+def save_game():
+    data = {
+        "gold": st.session_state.gold, "gems": st.session_state.gems,
+        "trophies": st.session_state.trophies, "xp": st.session_state.xp,
+        "inv": st.session_state.inv, "claimed": st.session_state.claimed,
+        "plus": st.session_state.plus
+    }
+    return base64.b64encode(str(data).encode()).decode()
+
+# --- 5. UI ---
+st.markdown("<h1 style='text-align: center; color: #00ffcc;'>💣 BRAWL STARS OMNI: RU v18.3</h1>", unsafe_allow_html=True)
+
+# Status Bar
+st.markdown(f"""
+    <div class="status-bar">
+        <span style="color: #fbbf24; font-size: 20px;">💰 {st.session_state.gold:,}</span>
+        <span style="color: #38bdf8; font-size: 20px;">💎 {st.session_state.gems}</span>
+        <span style="color: #f8fafc; font-size: 20px;">🏆 {st.session_state.trophies}</span>
+    </div>
+    """, unsafe_allow_html=True)
+
+col_shop, col_arena, col_pass = st.columns([1, 1, 1.4])
+
+with col_shop:
+    st.header("🛒 Магазин")
+    
+    # Box 500
+    st.markdown("<div class='box-card'><h3>📦 Малый ящик</h3><p>500 Золота</p></div>", unsafe_allow_html=True)
+    if st.button("ОТКРЫТЬ (500)", key="b500", use_container_width=True):
+        open_box(500, 0.05); st.rerun()
+
+    # Box 1000
+    st.markdown("<div class='box-card'><h3>🔵 Большой ящик</h3><p>1,000 Золота</p></div>", unsafe_allow_html=True)
+    if st.button("ОТКРЫТЬ (1,000)", key="b1000", use_container_width=True):
+        open_box(1000, 0.12); st.rerun()
+
+    # Box 3000
+    st.markdown("<div class='box-card' style='border-color: #ff0055;'><h3>🔥 Ультра ящик</h3><p>3,000 Золота</p></div>", unsafe_allow_html=True)
+    if st.button("ОТКРЫТЬ (3,000)", key="b3000", use_container_width=True):
+        open_box(3000, 0.30); st.rerun()
+
+with col_arena:
+    st.header("⚔️ Арена")
+    if st.button("🔥 НАЧАТЬ БОЙ (PLAY)", use_container_width=True, type="primary"):
+        with st.spinner("Бой..."):
+            time.sleep(0.5)
+            st.session_state.gold += 250
+            st.session_state.xp += 1000 # Ko'proq XP tezroq Brawl Pass uchun
+            st.session_state.trophies += 20
+            st.rerun()
+    
+    st.write("---")
+    st.subheader("💾 Сохранение")
+    if st.button("СОХРАНИТЬ ПРОГРЕСС", use_container_width=True):
+        code = save_game()
+        st.code(code)
+        st.caption("Скопируйте этот код!")
+
+with col_pass:
+    st.header("🎫 Бравл Пасс")
+    st.write(f"Ваш XP: **{st.session_state.xp:,}**")
+    st.progress(min(st.session_state.xp / 400000, 1.0))
+    
+    if not st.session_state.plus:
+        if st.button("КУПИТЬ PLUS (200 💎)", use_container_width=True):
+            if st.session_state.gems >= 200:
+                st.session_state.gems -= 200
+                st.session_state.plus = True
+                st.rerun()
+    else:
+        st.success("BRAWL PASS PLUS АКТИВЕН ✅")
+
+    st.markdown("<div class='pass-container'>", unsafe_allow_html=True)
+    for t, d in PASS_TIERS.items():
+        is_plus = t >= 10
+        claimed = t in st.session_state.claimed
+        unlocked = st.session_state.xp >= d['xp']
+        
+        # UI for tiers
+        status = "✅" if claimed else ("🎁" if unlocked else "🔒")
+        color = "#fbbf24" if is_plus else "#f8fafc"
+        
+        st.markdown(f"""
+            <div class="tier-card" style="border-left-color: {'#ff0055' if is_plus else '#6200ff'};">
+                <div style="display: flex; justify-content: space-between; color: {color};">
+                    <span>Tier {t}: {d['reward']}</span>
+                    <span>{status}</span>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        if unlocked and not claimed:
+            if is_plus and not st.session_state.plus:
+                st.button(f"Нужен Plus", key=f"l_{t}", disabled=True, use_container_width=True)
+            else:
+                if st.button(f"Забрать {d['reward']}", key=f"btn_{t}", use_container_width=True):
+                    if d['type'] == 'gold': st.session_state.gold += d['val']
+                    elif d['type'] == 'gems': st.session_state.gems += d['val']
+                    st.session_state.claimed.append(t)
+                    st.rerun()
+    st.markdown("</div>", unsafe_allow_html=True)
+
+# Collection
+st.write("---")
+st.header("👤 Мои Бойцы")
+cols = st.columns(5)
+for i, (name, data) in enumerate(st.session_state.inv.items()):
+    with cols[i % 5]:
+        st.markdown(f"<div class='brawler-card'><h3>{data['icon']}</h3><b>{name}</b><br><small>Сила: {data['pwr']}</small></div>", unsafe_allow_html=True)
+
+if st.sidebar.button("♻️ СБРОСИТЬ ВСЁ (0)"):
+    st.session_state.clear()
+    st.rerun()
