@@ -1,95 +1,115 @@
 import streamlit as st
 import time
 
-# Sayt sozlamalari
-st.set_page_config(page_title="Boylik Simulyatori 🏰", page_icon="💰", layout="wide")
+# Sayt sozlamalari (Vizual rejim)
+st.set_page_config(page_title="Samarqand Magnati 2.0 🏰", page_icon="💰", layout="wide")
 
-# --- STYLING (Haqiqiy biznes dizayn) ---
+# --- CUSTOM CSS (Dizaynni chiroyli qilish) ---
 st.markdown("""
     <style>
     .stApp { background-color: #0E1117; color: white; }
     .gold-display {
-        font-size: 60px; font-weight: bold; color: #00FF00;
-        text-align: center; border: 2px solid #00FF00;
-        border-radius: 20px; padding: 10px; margin-bottom: 20px;
+        font-size: 70px; font-weight: bold; color: #00FF00;
+        text-align: center; border: 3px solid #00FF00;
+        border-radius: 25px; padding: 15px; margin-bottom: 25px;
+        text-shadow: 2px 2px 4px #000;
     }
-    .stat-card {
+    .shop-card {
         background-color: #1E1E1E; padding: 15px;
-        border-radius: 10px; border-bottom: 4px solid #FF4B4B;
-        text-align: center;
+        border-radius: 15px; border: 1px solid #333;
+        margin-bottom: 20px; text-align: center;
+        transition: 0.3s;
     }
-    .buy-card {
-        background-color: #262730; padding: 20px;
-        border-radius: 15px; border: 1px solid #444;
-        margin-bottom: 15px;
-    }
+    .shop-card:hover { transform: scale(1.02); border-color: #00FF00; }
+    .prop-img { border-radius: 10px; margin-bottom: 10px; width: 100%; height: 150px; object-fit: cover; }
+    .stat-box { background-color: #262730; padding: 20px; border-radius: 15px; border-left: 5px solid #FF4B4B; }
     </style>
     """, unsafe_allow_html=True)
 
-# --- O'YIN HOLATI ---
-if 'money' not in st.session_state:
-    st.session_state.money = 0
-if 'click_power' not in st.session_state:
-    st.session_state.click_power = 10
-if 'inventory' not in st.session_state:
-    st.session_state.inventory = []
-if 'last_time' not in st.session_state:
-    st.session_state.last_time = time.time()
+# --- O'YIN HOLATINI BOSHQARISH ---
+if 'money' not in st.session_state: st.session_state.money = 0
+if 'click_power' not in st.session_state: st.session_state.click_power = 50  # Boshlanishiga kattaroq
+if 'passive_income' not in st.session_state: st.session_state.passive_income = 0
+if 'inventory' not in st.session_state: st.session_state.inventory = []
+if 'last_time' not in st.session_state: st.session_state.last_time = time.time()
 
-# --- ASOSIY QISM ---
-col_main, col_inv = st.columns([2, 1])
+# Avtomatik daromadni hisoblash
+now = time.time()
+diff = now - st.session_state.last_time
+if diff >= 1:
+    st.session_state.money += int(diff * st.session_state.passive_income)
+    st.session_state.last_time = now
 
-with col_main:
-    st.markdown(f"<div class='gold-display'>{st.session_state.money:,.0f} $</div>", unsafe_allow_html=True)
+# --- ASOSIY EKRAN ---
+st.markdown(f"<div class='gold-display'>{st.session_state.money:,.0f} $</div>", unsafe_allow_html=True)
+
+col_work, col_shop = st.columns([1, 2])
+
+# --- 1. ISHLASH BO'LIMI ---
+with col_work:
+    st.markdown("<div class='stat-box'>", unsafe_allow_html=True)
+    st.subheader("Biznesni boshqarish 📈")
+    st.write(f"Har bir bosish: **{st.session_state.click_power:,.0f} $**")
+    st.write(f"Avtomatik daromad: **{st.session_state.passive_income:,.0f} $/sek**")
     
-    if st.button("PUL ISHLASH (10 $)", use_container_width=True):
+    if st.button("PUL QAZIB OLISH ⛏️", use_container_width=True):
         st.session_state.money += st.session_state.click_power
         st.rerun()
-
-    st.write("---")
-    st.header("Avtosalon va Ko'chmas Mulk 🛍️")
+    st.markdown("</div>", unsafe_allow_html=True)
     
-    # DO'KON BUYUMLARI
-    items = [
-        {"nomi": "Spark", "narxi": 10000, "icon": "🚗", "turi": "Moshina"},
-        {"nomi": "Gentra", "narxi": 15000, "icon": "🚘", "turi": "Moshina"},
-        {"nomi": "Malibu 2", "narxi": 30000, "icon": "🏎️", "turi": "Moshina"},
-        {"nomi": "Toshkent City (Xonadon)", "narxi": 100000, "icon": "🏢", "turi": "Uy"},
-        {"nomi": "Hovli (G'azalkent)", "narxi": 250000, "icon": "🏰", "turi": "Uy"},
-        {"nomi": "Xususiy Orol", "narxi": 1000000, "icon": "🏝️", "turi": "Mulk"}
-    ]
-
-    for item in items:
-        with st.container():
-            st.markdown(f"<div class='buy-card'>", unsafe_allow_html=True)
-            c1, c2, c3 = st.columns([1, 2, 1])
-            with c1: st.write(f"## {item['icon']}")
-            with c2: 
-                st.write(f"**{item['nomi']}**")
-                st.write(f"Narxi: {item['narxi']:,} $")
-            with c3:
-                if st.button(f"Sotib olish", key=item['nomi']):
-                    if st.session_state.money >= item['narxi']:
-                        st.session_state.money -= item['narxi']
-                        st.session_state.inventory.append(f"{item['icon']} {item['nomi']}")
-                        st.balloons()
-                        st.success("Tabriklaymiz! Xarid qilindi.")
-                        st.rerun()
-                    else:
-                        st.error("Pul yetarli emas!")
-            st.markdown("</div>", unsafe_allow_html=True)
-
-with col_inv:
-    st.markdown("<div class='stat-card'>", unsafe_allow_html=True)
+    st.write("---")
+    # INVENTAR
     st.subheader("Mening Mulklarim 📦")
     if not st.session_state.inventory:
-        st.write("Hozircha hech narsa yo'q. Ishlang va boying!")
+        st.write("Hozircha faqat orzular bor...")
     else:
-        for i in st.session_state.inventory:
-            st.write(f"✅ {i}")
-    st.markdown("</div>", unsafe_allow_html=True)
+        for item in st.session_state.inventory:
+            st.write(f"✅ {item}")
 
-# Reset tugmasi
-if st.sidebar.button("Hammasini sotish va Kambag'allikka qaytish"):
+# --- 2. VIZUAL DO'KON BO'LIMI ---
+with col_shop:
+    st.header("Premium Bozori 🛍️")
+    
+    # MULKLAR RO'YXATI (RASMLAR BILAN)
+    # Eslatma: Rasmlar internetdan olingan namuna havolalar.
+    properties = [
+        {"nomi": "Spark (Oq)", "narxi": 12000, "img": "https://img.images.uz/2023/10/26/16983053644485.jpg", "turi": "moshina", "daromad": 0},
+        {"nomi": "Gentra (Qora)", "narxi": 18000, "img": "https://avtoelon.uz/m/posts/6561579b76c898a96e5793e2/image-1.jpg", "turi": "moshina", "daromad": 0},
+        {"nomi": "Malibu 2 Turbo", "narxi": 35000, "img": "https://motor.uz/files/cache/motor.uz/uploads/malibu/original/5e3b5e4368153_main_image.jpg", "turi": "moshina", "daromad": 0},
+        {"nomi": "Toshkent City (Xonadon)", "narxi": 150000, "img": "https://tashkentcity.uz/storage/photos/shares/banners/banner_3.jpg", "turi": "uy", "daromad": 100},
+        {"nomi": "Hovli (G'azalkent)", "narxi": 300000, "img": "https://img.images.uz/2022/10/27/16668744577815.jpg", "turi": "uy", "daromad": 250},
+    ]
+
+    # Kartochkalarni 2 ta ustunga bo'lish
+    shop_cols = st.columns(2)
+    
+    for i, prop in enumerate(properties):
+        col_idx = i % 2 # 0 yoki 1
+        with shop_cols[col_idx]:
+            st.markdown(f"<div class='shop-card'>", unsafe_allow_html=True)
+            # Rasm
+            st.markdown(f"<img src='{prop['img']}' class='prop-img'>", unsafe_allow_html=True)
+            # Ma'lumot
+            st.write(f"### {prop['nomi']}")
+            st.write(f"Narxi: **{prop['narxi']:,} $**")
+            if prop['daromad'] > 0:
+                st.write(f"Daromad: **+{prop['daromad']} $/sek**")
+            
+            # Sotib olish tugmasi
+            if st.button(f"Sotib olish ({prop['nomi']})", key=prop['nomi']):
+                if st.session_state.money >= prop['narxi']:
+                    st.session_state.money -= prop['narxi']
+                    st.session_state.inventory.append(f"{prop['nomi']}")
+                    st.session_state.passive_income += prop['daromad']
+                    st.balloons()
+                    st.success("Tabriklaymiz! Muvaffaqiyatli xarid.")
+                    st.rerun()
+                else:
+                    st.error("Mablag' yetarli emas!")
+            st.markdown("</div>", unsafe_allow_html=True)
+
+# Yon panel
+st.sidebar.title("Sozlamalar")
+if st.sidebar.button("O'yinni noldan boshlash (Reset)"):
     st.session_state.clear()
     st.rerun()
