@@ -1,82 +1,82 @@
 import streamlit as st
 import random
-import time
 
-# Sayt sozlamalari
-st.set_page_config(page_title="Matematik Duel ⚡", page_icon="🧮", layout="centered")
+# Saytni kengroq formatda ochamiz
+st.set_page_config(page_title="Emoji Labirinti", page_icon="🕵️", layout="centered")
 
-# --- STYLING (Saytni chiroyli qilish) ---
-st.markdown("""
-    <style>
-    .main {
-        background-color: #f0f2f6;
-    }
-    .stButton>button {
-        width: 100%;
-        border-radius: 10px;
-        height: 3em;
-        background-color: #FF4B4B;
-        color: white;
-        font-weight: bold;
-    }
-    .score-box {
-        background-color: #ffffff;
-        padding: 20px;
-        border-radius: 15px;
-        border: 2px solid #FF4B4B;
-        text-align: center;
-    }
-    </style>
-    """, unsafe_allow_html=True)
+# --- O'YIN SOZLAMALARI ---
+WIDTH = 7
+HEIGHT = 5
 
-# --- O'YIN MANTIQI ---
-if 'score' not in st.session_state:
-    st.session_state.score = 0
-if 'num1' not in st.session_state:
-    st.session_state.num1 = random.randint(1, 10)
-    st.session_state.num2 = random.randint(1, 10)
-    st.session_state.op = random.choice(['+', '-', '*'])
+def initialize_game():
+    st.session_state.player_pos = [0, 0]
+    st.session_state.treasure_pos = [random.randint(0, WIDTH-1), random.randint(0, HEIGHT-1)]
+    # Xazina o'yinchi ustiga tushib qolmasligi uchun
+    while st.session_state.treasure_pos == st.session_state.player_pos:
+        st.session_state.treasure_pos = [random.randint(0, WIDTH-1), random.randint(0, HEIGHT-1)]
+    st.session_state.moves = 0
+    st.session_state.game_over = False
 
-def generate_new_question():
-    st.session_state.num1 = random.randint(1, 15)
-    st.session_state.num2 = random.randint(1, 15)
-    st.session_state.op = random.choice(['+', '-', '*'])
+if 'player_pos' not in st.session_state:
+    initialize_game()
+
+# --- HARAKAT FUNKSIYALARI ---
+def move_player(direction):
+    if st.session_state.game_over: return
+    
+    st.session_state.moves += 1
+    if direction == "Yuqoriga" and st.session_state.player_pos[1] > 0:
+        st.session_state.player_pos[1] -= 1
+    elif direction == "Pastga" and st.session_state.player_pos[1] < HEIGHT - 1:
+        st.session_state.player_pos[1] += 1
+    elif direction == "Chapga" and st.session_state.player_pos[0] > 0:
+        st.session_state.player_pos[0] -= 1
+    elif direction == "O'ngga" and st.session_state.player_pos[0] < WIDTH - 1:
+        st.session_state.player_pos[0] += 1
 
 # --- INTERFEYS ---
-st.title("⚡ Tezkor Matematik Duel")
-st.write(f"Sizning joriy balingiz: **{st.session_state.score}**")
+st.title("🕵️ Xazinani topish o'yini!")
+st.write(f"Qadamlar soni: **{st.session_state.moves}**")
 
-# Savolni ko'rsatish
-misol = f"{st.session_state.num1} {st.session_state.op} {st.session_state.num2}"
-st.markdown(f"<div class='score-box'><h1>{misol} = ?</h1></div>", unsafe_allow_html=True)
+# Haritani chizish
+grid = ""
+for y in range(HEIGHT):
+    row = ""
+    for x in range(WIDTH):
+        if [x, y] == st.session_state.player_pos:
+            row += " 🧑‍🚀 " # O'yinchi
+        elif [x, y] == st.session_state.treasure_pos and st.session_state.game_over:
+            row += " 💎 " # Topilgan xazina
+        else:
+            row += " ⬛ " # Bo'sh joy
+    grid += row + "\n\n"
 
-# To'g'ri javobni hisoblash
-if st.session_state.op == '+': correct_ans = st.session_state.num1 + st.session_state.num2
-elif st.session_state.op == '-': correct_ans = st.session_state.num1 - st.session_state.num2
-else: correct_ans = st.session_state.num1 * st.session_state.num2
+st.markdown(f"```\n{grid}\n```")
 
-# Javob kiritish
-user_ans = st.number_input("Javobingizni yozing:", value=None, placeholder="Son kiriting...", step=1)
+# Boshqaruv tugmalari
+col1, col2, col3 = st.columns([1, 1, 1])
 
-if st.button("Javobni tekshirish"):
-    if user_ans == correct_ans:
-        st.balloons()
-        st.success("BARAKALLA! 🔥 +1 ball")
-        st.session_state.score += 1
-        generate_new_question()
-        time.sleep(1) # Foydalanuvchi xursand bo'lishi uchun 1 soniya kutamiz
+with col2:
+    if st.button("⬆️ Yuqoriga"): move_player("Yuqoriga"); st.rerun()
+
+col_a, col_b, col_c = st.columns([1, 1, 1])
+with col_a:
+    if st.button("⬅️ Chapga"): move_player("Chapga"); st.rerun()
+with col_b:
+    if st.button("♻️ Yangilash"): initialize_game(); st.rerun()
+with col_c:
+    if st.button("➡️ O'ngga"): move_player("O'ngga"); st.rerun()
+
+with col2:
+    if st.button("⬇️ Pastga"): move_player("Pastga"); st.rerun()
+
+# G'alaba sharti
+if st.session_state.player_pos == st.session_state.treasure_pos:
+    st.session_state.game_over = True
+    st.balloons()
+    st.success(f"TABRIKLAYMIZ! 💎 Xazinani {st.session_state.moves} ta qadamda topdingiz!")
+    if st.button("Yangi o'yin boshlash"):
+        initialize_game()
         st.rerun()
-    else:
-        st.error(f"Xato! To'g'ri javob {correct_ans} edi. ❌")
-        st.session_state.score = 0 # Xato qilsa ball nolga tushadi
-        st.info("O'yin qaytadan boshlanadi!")
-        generate_new_question()
-        time.sleep(2)
-        st.rerun()
 
-# Sidebar (Yon panel)
-st.sidebar.title("O'yin haqida")
-st.sidebar.write("Bu o'yin Python-da yaratildi.")
-if st.sidebar.button("Ballarni nolga tushirish"):
-    st.session_state.score = 0
-    st.rerun()
+st.info("Maslahat: Qora kvadratlar bo'ylab yuring va yashirin xazinani qidiring!")
