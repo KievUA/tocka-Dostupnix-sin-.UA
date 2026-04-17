@@ -121,4 +121,29 @@ with col_play:
                 open_box("MEGA")
                 st.rerun()
             else: st.error("Gemlar yetarli emas!")
-        st.markdown("</div>", unsafe_allow_
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    st.write("---")
+    st.subheader("📜 OXIRGI NATIJALAR")
+    for log in st.session_state.history[:5]:
+        st.write(log)
+
+with col_inv:
+    st.subheader("👤 JANGCHILARIM")
+    if not st.session_state.inv:
+        st.info("Hali hech kim yo'q, quti oching!")
+    else:
+        for b in st.session_state.inv:
+            color = BRAWLERS[b]['color']
+            rarity = BRAWLERS[b]['rarity']
+            st.markdown(f"""
+                <div class='brawler-card' style='border-color: {color};'>
+                    <h3 style='margin:0; color: {color};'>{b}</h3>
+                    <small>{rarity}</small>
+                </div>
+            """, unsafe_allow_html=True)
+
+# RESET
+if st.sidebar.button("⚙️ AKKAUNTNI O'CHIRISH"):
+    st.session_state.clear()
+    st.rerun()
