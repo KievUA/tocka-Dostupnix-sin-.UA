@@ -1,82 +1,64 @@
 import streamlit as st
-import random
+import time
 
-# Saytni kengroq formatda ochamiz
-st.set_page_config(page_title="Emoji Labirinti", page_icon="🕵️", layout="centered")
+# Sayt sozlamalari
+st.set_page_config(page_title="Oltin Konchisi 💰", page_icon="⛏️", layout="centered")
 
-# --- O'YIN SOZLAMALARI ---
-WIDTH = 7
-HEIGHT = 5
+# --- STYLING ---
+st.markdown("""
+    <style>
+    .stButton>button {
+        width: 100%;
+        height: 100px;
+        font-size: 40px !important;
+        background-color: #FFD700;
+        border: 5px solid #DAA520;
+        border-radius: 20px;
+    }
+    .stats-box {
+        background-color: #1E1E1E;
+        color: #FFD700;
+        padding: 20px;
+        border-radius: 15px;
+        text-align: center;
+        font-size: 24px;
+        margin-bottom: 20px;
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
-def initialize_game():
-    st.session_state.player_pos = [0, 0]
-    st.session_state.treasure_pos = [random.randint(0, WIDTH-1), random.randint(0, HEIGHT-1)]
-    # Xazina o'yinchi ustiga tushib qolmasligi uchun
-    while st.session_state.treasure_pos == st.session_state.player_pos:
-        st.session_state.treasure_pos = [random.randint(0, WIDTH-1), random.randint(0, HEIGHT-1)]
-    st.session_state.moves = 0
-    st.session_state.game_over = False
+# --- O'YIN HOLATI ---
+if 'gold' not in st.session_state:
+    st.session_state.gold = 0
+if 'click_power' not in st.session_state:
+    st.session_state.click_power = 1
+if 'auto_miners' not in st.session_state:
+    st.session_state.auto_miners = 0
+if 'last_time' not in st.session_state:
+    st.session_state.last_time = time.time()
 
-if 'player_pos' not in st.session_state:
-    initialize_game()
-
-# --- HARAKAT FUNKSIYALARI ---
-def move_player(direction):
-    if st.session_state.game_over: return
-    
-    st.session_state.moves += 1
-    if direction == "Yuqoriga" and st.session_state.player_pos[1] > 0:
-        st.session_state.player_pos[1] -= 1
-    elif direction == "Pastga" and st.session_state.player_pos[1] < HEIGHT - 1:
-        st.session_state.player_pos[1] += 1
-    elif direction == "Chapga" and st.session_state.player_pos[0] > 0:
-        st.session_state.player_pos[0] -= 1
-    elif direction == "O'ngga" and st.session_state.player_pos[0] < WIDTH - 1:
-        st.session_state.player_pos[0] += 1
+# Avtomatik oltin yig'ish hisob-kitobi
+current_time = time.time()
+time_diff = current_time - st.session_state.last_time
+if time_diff >= 1:
+    st.session_state.gold += int(time_diff * st.session_state.auto_miners)
+    st.session_state.last_time = current_time
 
 # --- INTERFEYS ---
-st.title("🕵️ Xazinani topish o'yini!")
-st.write(f"Qadamlar soni: **{st.session_state.moves}**")
+st.title("⛏️ Oltin Konchisi Imperiyasi")
 
-# Haritani chizish
-grid = ""
-for y in range(HEIGHT):
-    row = ""
-    for x in range(WIDTH):
-        if [x, y] == st.session_state.player_pos:
-            row += " 🧑‍🚀 " # O'yinchi
-        elif [x, y] == st.session_state.treasure_pos and st.session_state.game_over:
-            row += " 💎 " # Topilgan xazina
-        else:
-            row += " ⬛ " # Bo'sh joy
-    grid += row + "\n\n"
+# Oltin ko'rsatkichi
+st.markdown(f"<div class='stats-box'>Sizning Oltinlaringiz: {st.session_state.gold} 💰</div>", unsafe_allow_html=True)
 
-st.markdown(f"```\n{grid}\n```")
+# ASOSIY TUGMA
+if st.button("URISH! 🔨"):
+    st.session_state.gold += st.session_state.click_power
+    st.rerun()
 
-# Boshqaruv tugmalari
-col1, col2, col3 = st.columns([1, 1, 1])
+st.write("---")
 
-with col2:
-    if st.button("⬆️ Yuqoriga"): move_player("Yuqoriga"); st.rerun()
+# DO'KON (UPGRADES)
+col1, col2 = st.columns(2)
 
-col_a, col_b, col_c = st.columns([1, 1, 1])
-with col_a:
-    if st.button("⬅️ Chapga"): move_player("Chapga"); st.rerun()
-with col_b:
-    if st.button("♻️ Yangilash"): initialize_game(); st.rerun()
-with col_c:
-    if st.button("➡️ O'ngga"): move_player("O'ngga"); st.rerun()
-
-with col2:
-    if st.button("⬇️ Pastga"): move_player("Pastga"); st.rerun()
-
-# G'alaba sharti
-if st.session_state.player_pos == st.session_state.treasure_pos:
-    st.session_state.game_over = True
-    st.balloons()
-    st.success(f"TABRIKLAYMIZ! 💎 Xazinani {st.session_state.moves} ta qadamda topdingiz!")
-    if st.button("Yangi o'yin boshlash"):
-        initialize_game()
-        st.rerun()
-
-st.info("Maslahat: Qora kvadratlar bo'ylab yuring va yashirin xazinani qidiring!")
+with col1:
+    st.subheader("Do'kon 🛒")
