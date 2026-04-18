@@ -36,7 +36,7 @@ HOUSES = [
 # --- 3. ENGINE (SAVE/LOAD TEGILMADI) ---
 if 'gold' not in st.session_state:
     st.session_state.update({
-        'gold': 1000, 'gems': 0, 'xp': 0, 'used_promos': [],
+        'gold': 0, 'gems': 0, 'xp': 0, 'used_promos': [],
         'inventory': []
     })
 
@@ -107,8 +107,8 @@ with tab2:
 with tab3:
     st.subheader("Earn Money & XP")
     if st.button("💰 EXECUTE HIGH-STAKES MISSION (+$10,000 | +500 XP)", use_container_width=True):
-        st.session_state.gold += 10000
-        st.session_state.xp += 500
+        st.session_state.gold += 100
+        st.session_state.xp += 25
         st.toast("Mission Accomplished!"); time.sleep(0.5); st.rerun()
 
 with tab4:
